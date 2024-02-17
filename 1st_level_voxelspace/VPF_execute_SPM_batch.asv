@@ -1,0 +1,110 @@
+function VPF_execute_SPM_batch(pipepath,subject_ID,experiment)
+
+if ~ischar(subject_ID)
+    subject_ID = num2str(subject_ID);
+end
+
+%set up the paths
+experiment_path = [pipepath subject_ID '/ses-02/'];
+
+
+%load the corresponding timing file. Used to fill in the onset and duration fields of the SPM batch
+timing_info_file = dir([experiment_path '/*tasktiminginfo_' subject_ID '.mat']);
+timing_info_file = load([timing_info_file.folder '/' timing_info_file.name]);
+
+
+%handle some different namings of the same things
+if strcmp(experiment,'wmpractice')
+    experiment_path = [experiment_path '/func/WM_localizer/'];
+elseif strcmp(experiment,'calibration')
+    experiment_path = [experiment_path '/func/pain_calib/'];
+elseif strcmp(experiment,'postcalibration')
+    experiment_path = [experiment_path '/func/post_calib/'];
+else
+    experiment_path = [experiment_path '/func/layers/'];
+end
+
+%create the statistics output path
+stats_path = [experiment_path 'rwls_stats'];
+
+
+%load the data as filenames in a struct
+Nruns = numel(timing_info_file.loginfo.(experiment));
+for ii = 1:Nruns
+    tmp = dir([experiment_path '/run' num2str(ii) '/func/*_Warped-to-Anat.nii']);
+    scanfiles = cell(size(tmp));
+    for jj = 1:numel(scanfiles)
+        scanfiles(jj) = cellstr([tmp(jj).folder '/' tmp(jj).name ',1']);
+    end
+    scans.(['run' num2str(ii)]) = scanfiles;
+end
+
+
+%run the SPM batch
+inputs = cell(0, 1);
+spm('defaults', 'FMRI');
+spm_jobman('run', batch_to_execute(stats_path,scans,timing_info_file.loginfo.(experiment),experiment), inputs{:});
+
+end
+
+function matlabbatch = batch_to_execute(stats_path,scans,timing_info,experiment)
+
+%-----------------------------------------------------------------------
+% Job saved on 31-Jan-2023 12:18:03 by cfg_util (rev $Rev: 7345 $)
+% spm SPM - SPM12 (7771)
+% cfg_basicio BasicIO - Unknown
+%-----------------------------------------------------------------------
+
+pos = strfind(stats_path,'/');
+pos = pos(end);
+
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.dir = {stats_path};
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.timing.units = 'secs';
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.timing.RT = 3;
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.timing.fmri_t = 16;
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.timing.fmri_t0 = 8;
+%%
+
+if ~strcmp(experiment,'wmpractice')
+    task = 'painstim';
+else
+    task = 'task';
+end
+
+for ii = 1:length(fieldnames(scans))
+
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).scans = scans.(['run' num2str(ii)]);
+
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).name = 'anticipation';
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).onset = [timing_info(ii).timing.anticip.onset];
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).duration = [timing_info(ii).timing.anticip.duration];
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).tmod = 0;
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {});
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(1).orth = 1;
+
+
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).name = 'task';
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).onset = [timing_info(ii).timing.(task).onset];
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).duration = [timing_info(ii).timing.(task).duration];
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).tmod = 0;
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).pmod = struct('name', {}, 'param', {}, 'poly', {});
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).cond(2).orth = 1;
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).multi = {''};
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).regress = struct('name', {}, 'val', {});
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).multi_reg = ...
+        cellstr([stats_path(1:pos) 'run' num2str(ii) '/func/mag_POCS_r' num2str(ii) '_MoCorr.txt']);
+    matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.sess(ii).hpf = 128;
+
+
+end
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.fact = struct('name', {}, 'levels', {});
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.bases.hrf.derivs = [0 0];
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.volt = 1;
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.global = 'None';
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.mthresh = 0.8;
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.mask = {''};
+matlabbatch{1}.spm.tools.rwls.fmri_rwls_spec.cvi = 'wls';
+
+matlabbatch{2}.spm.tools.rwls.fmri_rwls_est.spmmat(1) = cfg_dep('fMRI model specification: SPM.mat File', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','spmmat'));
+matlabbatch{2}.spm.tools.rwls.fmri_rwls_est.method.Classical = 1;
+end
