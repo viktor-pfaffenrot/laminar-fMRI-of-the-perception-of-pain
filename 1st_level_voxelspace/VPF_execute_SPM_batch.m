@@ -33,7 +33,7 @@ stats_path = [experiment_path '/rwls_stats'];
 %load the data as filenames in a struct
 Nruns = length(dir([experiment_path '/run*']));
 for ii = 1:Nruns
-    tmp = dir([experiment_path '/run' num2str(ii) '/func/*_Warped-to-Anat.nii']);
+    tmp = dir([experiment_path '/run' num2str(ii) '/func/*_Warped-to-Anat*']);
     scanfiles = cell(size(tmp));
     for jj = 1:numel(scanfiles)
         scanfiles(jj) = cellstr([tmp(jj).folder '/' tmp(jj).name ',1']);

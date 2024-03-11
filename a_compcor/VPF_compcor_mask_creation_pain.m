@@ -1,27 +1,34 @@
-function mask = VPF_compcor_mask_creation_pain(subid,subpath)
+function mask = VPF_compcor_mask_creation_pain(structpath)
 %Function to create WM mask for compcor. Uses the pain ROIs as seeds. Saves
 % the mask as .nii.gz.
 
 %INPUT:
-%subid [str]        : subject id
-%subpath [str]      : path to the derivatives folder
-
+%structpath [str]        : path to presurf_UNI
 
 %OUTPUT:
 %mask [logical]     : 3D mask of WM around the functional ROIs
 
-struct_path = [subpath '/' subid '/ses-01/anat/presurf_MPRAGEise/presurf_UNI'];
-T1 = [struct_path '/UNI_MoCo_MPRAGEised_biascorrected.nii'];
+subpath = extractBefore(structpath,'/ses-');
 
-% load WM propability map and threshold at 90 %  
-tmp = load_nifti([struct_path '/UNI_MoCo_MPRAGEised_class2.nii']).vol;
+T1 = [structpath '/UNI_MoCo_MPRAGEised_biascorrected_masked.nii'];
+T1_dir = dir(T1);
+
+if isempty(T1_dir)
+    T1 = [structpath '/UNI_MoCo_MPRAGEised_biascorrected.nii'];
+end
+
+% load WM propability map and threshold at 90 %
+tmp = load_nifti([structpath '/UNI_MoCo_MPRAGEised_class2.nii']).vol;
 WM_mask = zeros(size(tmp),'logical');
 WM_mask(tmp>0.9) = true;
 
 %get all the positive pain localizer ROIs
-mask_dir = [subpath '/' subid '/ses-02/func/post_calib/rwls_stats'];
+mask_dir = [subpath '/ses-02/func/post_calib/rwls_stats'];
 masks = dir([mask_dir '/pain_localizer_ROI*_pos.nii']);
 
+if exist([mask_dir '/compcor_mask.nii.gz'],'file') == 2
+    return
+end
 
 %create one mask out of all ROIs
 T1_hdr = load_nifti(T1,1);
