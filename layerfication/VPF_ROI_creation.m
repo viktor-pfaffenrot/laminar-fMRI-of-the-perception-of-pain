@@ -28,7 +28,7 @@ system([fs_base cmd]);
 
 cmd = ['mri_convert ' '"' fs_path '/aparc.mgz" ' '"' fs_path '/aparc.nii.gz"'];
 system([fs_base cmd]);
-aparc = ['"' fs_path '"' '/aparc.nii.gz'];
+aparc = [fs_path  '/aparc.nii.gz'];
 
 %aparc2009
 cmd = ['mri_label2vol --seg ' '"' aparc2009 '"' ' --temp ' '"' fs_path '/rawavg.mgz" --o '...
@@ -37,7 +37,7 @@ system([fs_base cmd]);
 
 cmd = ['mri_convert ' '"' fs_path '/aparc2009.mgz" ' '"' fs_path '/aparc2009.nii.gz"'];
 system([fs_base cmd]);
-aparc2009 = ['"' fs_path '"' '/aparc2009.nii.gz'];
+aparc2009 = [fs_path '/aparc2009.nii.gz'];
 
 
 %% working memory localizer

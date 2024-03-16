@@ -22,6 +22,7 @@ for run = 1:N_runs
         con = zeros(size(GLM,1),1);
         for ROI = 1:N_ROIS
             Y = squeeze(layers(:,ROI,:,run));
+            Y = Y(:,any(Y ~= 0, 1));
             if ZTRANS
                 %baseline z-transform. I take the volumes corresponding
                 % to 0 in the sum of all pain trials as baseline

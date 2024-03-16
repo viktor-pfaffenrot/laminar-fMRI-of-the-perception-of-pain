@@ -13,7 +13,7 @@ WM_mask = load_nifti([structpath '/UNI_MoCo_MPRAGEised_class2.nii']).vol;
 WM_mask = WM_mask>0.9;
 
 mask = load_nifti([subpath '/ses-02/func/post_calib/rwls_stats/compcor_mask.nii.gz']).vol;
-mask = mask(WM_mask);
+mask = logical(mask(WM_mask));
 
 data = dir([inppath '/*Warped-to-Anat*']);
 vols = length(data);

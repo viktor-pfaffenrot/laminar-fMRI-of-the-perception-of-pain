@@ -34,7 +34,9 @@ end
 T1_hdr = load_nifti(T1,1);
 mask = zeros(T1_hdr.dim(2:4).','logical');
 for ii = 1:length(masks)
-    tmp = logical(load_nifti([masks(ii).folder '/' masks(ii).name]).vol);
+    tmp = load_nifti([masks(ii).folder '/' masks(ii).name]).vol;
+    tmp(isnan(tmp)) = 0;
+    tmp = logical(tmp);
     mask(tmp) = tmp(tmp);
 end
 

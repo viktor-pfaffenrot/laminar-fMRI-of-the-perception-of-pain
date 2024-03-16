@@ -1,20 +1,18 @@
 clear;clc;
 
-addpath("/path-to-all-the-scrips-used-here")
-
-subid = 7485;
+pipepath = '/media/pfaffenrot/My Passport1/pain_layers/main_project/derivatives/pipeline';
+subid = 7356;
 ISPHASE = 1;
 paths = {
-         ['/yourpath/' num2str(subid) 'ses-01/run1/fmap'];...
-         ['/yourpath/' num2str(subid) 'ses-01/run1/func'];...
+         [pipepath '/' num2str(subid) '/ses-02/func/WM_localizer/run1/fmap'];...
+         [pipepath '/' num2str(subid) '/ses-02/func/WM_localizer/run1/func'];...
          }.';
 
-dummies = 0;
-PF_factor = 6/8;
+dummies = 3;
+PF_factor = 7/8;
 
 for inp = paths
-
-    mypath = inp{1};
+    mypath = inp{:};
     %back in the days I also took the gmap from the scanner for NORDIC. 
     %If you have a folder called gmap in your path, it'll process it as well
     if any(strcmp({dir(mypath).name}, 'gmap'))
@@ -37,7 +35,6 @@ for inp = paths
 
 
     delete([mypath '/*.IMA'])
-
     %rename and compress files
     fprintf('saving....\n')
     run = char(regexp(mypath, 'run(\d+)', 'tokens', 'once'));
